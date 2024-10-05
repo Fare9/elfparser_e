@@ -86,10 +86,7 @@ int parse_elf(const char *pathname)
     return (0);
 }
 
-/***
- * Elf header parsing, useful functions
- * and printing
- */
+
 int parse_elf_ehdr(uint8_t *buf_ptr, size_t file_size)
 {
     Elf32_Ehdr *elf32_ehdr;
@@ -110,6 +107,7 @@ int parse_elf_ehdr(uint8_t *buf_ptr, size_t file_size)
     // point to buffer and do checks
     e_ident = (char *)buf_ptr;
 
+    // Check for the 0x7fELF characters
     if (e_ident[EI_MAG0] != ELFMAG0 || e_ident[EI_MAG1] != ELFMAG1 || e_ident[EI_MAG2] != ELFMAG2 || e_ident[EI_MAG3] != ELFMAG3)
     {
         fprintf(stderr, "parse_elf_hdr: elf incorrect header\n");
@@ -122,6 +120,8 @@ int parse_elf_ehdr(uint8_t *buf_ptr, size_t file_size)
         elf_ehdr = NULL;
     }
 
+    // we use a standard structure to avoid distinguish between
+    // 32 and 64 bits
     elf_ehdr = allocate_memory(sizeof(Elf_Ehdr));
 
     if (e_ident[EI_CLASS] == ELFCLASS32) // if 32 bit binary
@@ -181,6 +181,7 @@ int parse_elf_ehdr(uint8_t *buf_ptr, size_t file_size)
         return (-1);
     }
 
+    // Finally checks to avoid having data out of the elf file
     if (elf_ehdr->e_ehsize > file_size)
     {
         fprintf(stderr, "parse_elf_ehdr: elf header out of file bound\n");
@@ -202,6 +203,7 @@ int parse_elf_ehdr(uint8_t *buf_ptr, size_t file_size)
     return (0);
 }
 
+
 int is_32_bit_binary()
 {
     if (elf_ehdr == NULL)
@@ -212,6 +214,7 @@ int is_32_bit_binary()
     else
         return (0);
 }
+
 
 int is_64_bit_binary()
 {
@@ -224,16 +227,20 @@ int is_64_bit_binary()
         return (0);
 }
 
+
 const Elf_Ehdr *
 get_elf_ehdr_read()
 {
     return elf_ehdr;
 }
 
+
 /*
  * Auxiliar methods to print names instead of simple
  * numbers from the ElfN_Ehdr header
  */
+
+
 static void
 print_elf_class(unsigned char e_ident)
 {
@@ -253,6 +260,7 @@ print_elf_class(unsigned char e_ident)
 
     printf("ELF_CLASS:                              %s\n", class);
 }
+
 
 static void
 print_elf_data(unsigned char e_data)
@@ -274,6 +282,7 @@ print_elf_data(unsigned char e_data)
     printf("ELF_DATA:                               %s\n", data);
 }
 
+
 static void
 print_elf_version(unsigned char e_version)
 {
@@ -291,6 +300,7 @@ print_elf_version(unsigned char e_version)
 
     printf("ELF_VERSION:                            %s\n", version);
 }
+
 
 static void
 print_elf_osabi(unsigned char e_osabi)
@@ -348,6 +358,7 @@ print_elf_osabi(unsigned char e_osabi)
 
     printf("ELF_OSABI:                              %s\n", osabi);
 }
+
 
 static void
 print_emachine(unsigned char machine)
@@ -599,6 +610,7 @@ print_emachine(unsigned char machine)
     }
 }
 
+
 void print_elf_ehdr()
 {
     int i;
@@ -656,9 +668,7 @@ void print_elf_ehdr()
     printf("Elf section header string table index:  %lld\n", (long long unsigned int)elf_ehdr->e_shstrndx);
 }
 
-/***
- * Program header parsing and printing
- */
+
 int parse_elf_phdr(uint8_t *buf_ptr, size_t file_size)
 {
     int i;
@@ -683,8 +693,10 @@ int parse_elf_phdr(uint8_t *buf_ptr, size_t file_size)
         elf_phdr = NULL;
     }
 
+    // allocate enough memory for storing the array of elf_phdr
     elf_phdr = allocate_memory(sizeof(Elf_Phdr) * elf_ehdr->e_phnum);
 
+    // Copy the data to the common structure
     if (is_32_bit_binary())
     {
         elf32_phdr = (Elf32_Phdr *)&buf_ptr[elf_ehdr->e_phoff];
@@ -722,6 +734,7 @@ int parse_elf_phdr(uint8_t *buf_ptr, size_t file_size)
         return (-1);
     }
 
+    // error checks
     for (i = 0; i < elf_ehdr->e_phnum; i++)
     {
         if (elf_phdr[i].p_offset > file_size || (elf_phdr[i].p_offset + elf_phdr[i].p_filesz) > file_size)
@@ -729,7 +742,10 @@ int parse_elf_phdr(uint8_t *buf_ptr, size_t file_size)
             fprintf(stderr, "parse_elf_phdr: program header %d is out of file bound\n", i);
             return (-1);
         }
-
+        
+        // One of the elf_phdr has the type PT_INTERP, this type
+        // points with its offset to a string which contains the
+        // interpreter for the program.
         if (elf_phdr[i].p_type == PT_INTERP)
         {
             Interpreter = strdup((char *)&buf_ptr[elf_phdr[i].p_offset]);
@@ -738,6 +754,7 @@ int parse_elf_phdr(uint8_t *buf_ptr, size_t file_size)
 
     return (0);
 }
+
 
 static void
 print_phdr_type(uint32_t type)
@@ -797,6 +814,7 @@ print_phdr_type(uint32_t type)
         break;
     }
 }
+
 
 void print_elf_phdr()
 {
@@ -881,9 +899,12 @@ void print_elf_phdr()
     }
 }
 
+
 /***
  * Section header parsing and printing
  */
+
+
 int parse_elf_shdr(uint8_t *buf_ptr, size_t file_size)
 {
     int i;
@@ -970,6 +991,7 @@ int parse_elf_shdr(uint8_t *buf_ptr, size_t file_size)
     return (0);
 }
 
+
 static void
 print_16_str(char *string)
 {
@@ -985,6 +1007,7 @@ print_16_str(char *string)
     }
     printf(" ");
 }
+
 
 static void
 printf_shdr_type(uint32_t type)
@@ -1072,6 +1095,7 @@ printf_shdr_type(uint32_t type)
     }
 }
 
+
 static void
 printf_shdr_flags(uint64_t flags)
 {
@@ -1154,6 +1178,7 @@ printf_shdr_flags(uint64_t flags)
     }
 }
 
+
 void print_elf_shdr()
 {
     int i;
@@ -1193,9 +1218,12 @@ void print_elf_shdr()
     }
 }
 
+
 /***
  * Symbols header parsing and printing
  */
+
+
 int parse_elf_sym(uint8_t *buf_ptr)
 {
     Elf32_Sym *elf32_sym;
@@ -1227,6 +1255,7 @@ int parse_elf_sym(uint8_t *buf_ptr)
     {
         if (elf_shdr[i].sh_type == SHT_DYNSYM)
         {
+            // save this section header with dynamic symbols
             dynsym_sh = &elf_shdr[i];
 
             /*
@@ -1238,10 +1267,12 @@ int parse_elf_sym(uint8_t *buf_ptr)
             {
                 DynSymbolStringTable = (char *)&buf_ptr[elf_shdr[elf_shdr[i].sh_link].sh_offset];
             }
+            continue;
         }
 
         if (elf_shdr[i].sh_type == SHT_SYMTAB)
         {
+            // save this section header with static symbols
             symtab_sh = &elf_shdr[i];
 
             /*
@@ -1253,6 +1284,7 @@ int parse_elf_sym(uint8_t *buf_ptr)
             {
                 SymbolStringTable = (char *)&buf_ptr[elf_shdr[elf_shdr[i].sh_link].sh_offset];
             }
+            continue;
         }
     }
 
@@ -1275,9 +1307,12 @@ int parse_elf_sym(uint8_t *buf_ptr)
     {
         if (is_32_bit_binary())
         {
+            // number of structures of dynamic symbols
             dynsym_num = dynsym_sh->sh_size / sizeof(Elf32_Sym);
 
+            // create the memory for the dynamic symbols
             elf_dynsym = (Elf_Sym *)allocate_memory(dynsym_num * sizeof(Elf_Sym));
+            // pointer to the Elf32_Sym symbols array
             elf32_sym = (Elf32_Sym *)&buf_ptr[dynsym_sh->sh_offset];
 
             for (i = 0; i < dynsym_num; i++)
@@ -1292,6 +1327,7 @@ int parse_elf_sym(uint8_t *buf_ptr)
         }
         else if (is_64_bit_binary())
         {
+            // same for 64 bits
             dynsym_num = dynsym_sh->sh_size / sizeof(Elf64_Sym);
 
             elf_dynsym = (Elf_Sym *)allocate_memory(dynsym_num * sizeof(Elf_Sym));
@@ -1358,6 +1394,7 @@ int parse_elf_sym(uint8_t *buf_ptr)
 
     return (0);
 }
+
 
 static void
 print_info(unsigned char st_info)
@@ -1454,6 +1491,7 @@ print_info(unsigned char st_info)
     printf(" ");
 }
 
+
 static void
 print_visibility(unsigned char st_other)
 {
@@ -1485,6 +1523,7 @@ print_visibility(unsigned char st_other)
     printf(" ");
 }
 
+
 static void
 print_section(uint16_t section)
 {
@@ -1511,6 +1550,7 @@ print_section(uint16_t section)
 
     printf(" ");
 }
+
 
 void print_elf_sym()
 {
@@ -1563,9 +1603,11 @@ void print_elf_sym()
     }
 }
 
+
 /***
  * Relocation header parsing and printing
  */
+
 
 int parse_elf_rel_a(uint8_t *buf_ptr, size_t file_size)
 {
@@ -1624,6 +1666,9 @@ int parse_elf_rel_a(uint8_t *buf_ptr, size_t file_size)
     }
 
     // Now count again number of rel and rela sections
+    // we will need it to create the first array
+    // and then for each section with REL and RELA
+    // read the number of structures on each section.
     for (i = 0; i < elf_ehdr->e_shnum; i++)
     {
         if (elf_shdr[i].sh_type == SHT_REL)
@@ -1632,6 +1677,7 @@ int parse_elf_rel_a(uint8_t *buf_ptr, size_t file_size)
             rela_sections++;
     }
 
+    // allocate for array of arrays
     if (rel_sections)
         elf_rel = allocate_memory(rel_sections * sizeof(Elf_Rel *));
 
@@ -1640,6 +1686,8 @@ int parse_elf_rel_a(uint8_t *buf_ptr, size_t file_size)
 
     for (i = 0; i < elf_ehdr->e_shnum; i++)
     {
+        // Read a SHT_REL structure (internally it can keep
+        // an array of Elf_Rel structures)
         if (elf_shdr[i].sh_type == SHT_REL)
         {
             if (is_32_bit_binary())
@@ -1675,6 +1723,8 @@ int parse_elf_rel_a(uint8_t *buf_ptr, size_t file_size)
             rel_index++;
         }
 
+        // Read a SHT_RELA structure (internally it can keep
+        // an array of Elf_Rela structures)
         if (elf_shdr[i].sh_type == SHT_RELA)
         {
             if (is_32_bit_binary())
@@ -1867,6 +1917,7 @@ print_rel_info_32_bit(uint64_t r_info, Elf_Sym *associated_symbol, char *str_tab
         printf(" %016x", associated_symbol[sym].st_value);
 }
 
+
 static void
 print_rel_info_64_bit(uint64_t r_info, Elf_Sym *associated_symbol, char *str_table)
 {
@@ -2014,6 +2065,7 @@ print_rel_info_64_bit(uint64_t r_info, Elf_Sym *associated_symbol, char *str_tab
         printf(" %016x", associated_symbol[sym].st_value);
 }
 
+
 static void
 print_rel_info(uint64_t r_info, Elf_Sym *associated_symbol, char *str_table)
 {
@@ -2030,6 +2082,7 @@ print_rel_info(uint64_t r_info, Elf_Sym *associated_symbol, char *str_table)
         printf(" (not supported binary architecture)");
     }
 }
+
 
 void print_elf_rel_a()
 {
@@ -2127,6 +2180,8 @@ void print_elf_rel_a()
 /***
  * Dynamic program header parsing and printing
  */
+
+
 int parse_elf_dynamic(uint8_t *buf_ptr, size_t file_size)
 {
     int i;
@@ -2162,7 +2217,9 @@ int parse_elf_dynamic(uint8_t *buf_ptr, size_t file_size)
 
         dynamic_headers = 0;
     }
-    // Now get number of dynamic headers
+    // Now get number of dynamic headers, we only have one segment
+    // with the type PT_DYNAMIC, its size in the file, divided by
+    // the size of the structure will give us the number of headers.
     for (i = 0; i < elf_ehdr->e_phnum; i++)
     {
         if (elf_phdr[i].p_type == PT_DYNAMIC)
@@ -2175,7 +2232,8 @@ int parse_elf_dynamic(uint8_t *buf_ptr, size_t file_size)
             {
                 dynamic_headers = elf_phdr[i].p_filesz / sizeof(Elf64_Dyn);
             }
-
+            // pointer to the program header
+            // which contains the dynamic data
             dynamic = &elf_phdr[i];
 
             break;
@@ -2212,6 +2270,7 @@ int parse_elf_dynamic(uint8_t *buf_ptr, size_t file_size)
 
     return (0);
 }
+
 
 static char *
 print_tag(Elf64_Sxword d_tag)
@@ -2443,6 +2502,7 @@ print_tag(Elf64_Sxword d_tag)
     return ret_value;
 }
 
+
 void print_elf_dynamic()
 {
     int i;
@@ -2476,6 +2536,7 @@ void print_elf_dynamic()
     }
 }
 
+
 void 
 print_imported_libraries()
 {
@@ -2497,6 +2558,7 @@ print_imported_libraries()
 
     return;
 }
+
 
 void 
 print_imported_functions()
@@ -2564,6 +2626,7 @@ print_imported_functions()
     return;
 }
 
+
 void
 print_exported_libraries()
 {
@@ -2582,6 +2645,7 @@ print_exported_libraries()
         }
     }
 }
+
 
 void 
 print_exported_functions()
@@ -2635,6 +2699,7 @@ print_exported_functions()
     }
     return;
 }
+
 
 void close_everything()
 {

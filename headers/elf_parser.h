@@ -43,10 +43,43 @@ int parse_elf(const char *pathname);
  * Elf header parsing, useful functions
  * and printing
  */
+
+/**
+ * Elf header parsing, the ELF header points to all
+ * the other headers in the file, as well as it contains
+ * the sizes of these headers (in bytes). At the beginning
+ * of the structure we have information about the ELF
+ * file, if it is an executable, shared object, for which
+ * machine is compiled for, etc.
+ * Check `Elf_Ehdr` structure for more information.
+ * 
+ * @param buf_ptr pointer to the mapped ELF file
+ * @param file_size size of the file for checks
+ * @return check for errors, 0 if everything was correct, -1 otherwise
+ */
 int parse_elf_ehdr(uint8_t *buf_ptr, size_t file_size);
+
+/**
+ * Check if the binary is a 32 bit binary.
+ * 
+ * @return 1 if binary is 32 bit binary, 0 if not, -1 if there was an error.
+ */
 int is_32_bit_binary();
+
+/**
+ * Check if the binary is a 64 bit binary.
+ * 
+ * @return 1 if binary is 64 bit binary, 0 if not, -1 if there was an error.
+ */
 int is_64_bit_binary();
+
+/**
+ * Get the read `Elf_Ehdr` structure.
+ * 
+ * @return constant pointer to `Elf_Ehdr` structure
+ */
 const Elf_Ehdr *get_elf_ehdr_read();
+
 void print_elf_ehdr();
 
 /***
@@ -72,6 +105,18 @@ Elf64_Half e_shstrndx();
 
 /***
  * Program header parsing and printing
+ */
+
+/**
+ * Program header parsing, the program header represents
+ * the segments that are loaded in memory, inside of these
+ * segments we have the sections, but we do not need these
+ * sections in run-time, since that is information for
+ * linker, or debuggers, etc.
+ * 
+ * @param buf_ptr pointer to the elf file on disk
+ * @param file_size size of the file for checks
+ * @return error code, 0 if everything was well, -1 otherwise
  */
 int parse_elf_phdr(uint8_t *buf_ptr, size_t file_size);
 void print_elf_phdr();
@@ -116,6 +161,15 @@ uint64_t sh_entsize(size_t header);
 /***
  * Symbols header parsing and printing
  */
+
+/**
+ * Parsing of different symbol tables, these tables
+ * are taken from the different section headers. For
+ * the moment, we parse SHT_DYNSYM and SHT_SYMTAB.
+ * 
+ * @param buf_ptr pointer to the bytes with the elf file
+ * @return error code, 0 if everything was well, -1 otherwise
+ */
 int parse_elf_sym(uint8_t *buf_ptr);
 void print_elf_sym();
 
@@ -150,6 +204,16 @@ uint64_t symtab_st_size(size_t header);
 /***
  * Relocation header parsing and printing
  */
+
+/**
+ * Parse all the relocations from the sections,
+ * the sections can be divided into SHT_REL and
+ * SHT_RELA.
+ * 
+ * @param buf_ptr pointer to the bytes of the elf file
+ * @param file_size size of the file for checks
+ * @return error code, 0 if everything was well, -1 otherwise
+ */
 int parse_elf_rel_a(uint8_t *buf_ptr, size_t file_size);
 void print_elf_rel_a();
 
@@ -178,6 +242,18 @@ size_t      rela_64_size();
 
 /***
  * DYNAMIC Program header parsing and printing
+ */
+
+/**
+ * Sections exists only in the file on disk, so when a program
+ * is loaded into memory the dynamic linker will need a dynamic
+ * segment with information to load all the functions imported
+ * from other libraries. Because this is a segment, it will be
+ * loaded into memory.
+ * 
+ * @param buf_ptr pointer to the bytes from the file
+ * @param file_size size of the file for checks.
+ * @return error code, 0 if everything was well, -1 otherwise
  */
 int parse_elf_dynamic(uint8_t *buf_ptr, size_t file_size);
 void print_elf_dynamic();
