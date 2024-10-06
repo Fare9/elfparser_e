@@ -21,7 +21,27 @@ ELF_LIB = CDLL(ELF_LIB_NAME)
 
 
 class Elf_Ehdr():
-
+    """
+    Represents the ELF (Executable and Linkable Format) header in a 64-bit ELF file. 
+    This header contains metadata about the file layout, including entry points, 
+    offsets to program and section headers, and other vital details needed for execution.
+    
+    Attributes:
+        e_ident (bytes): ELF identification (magic number, architecture, endianness).
+        e_type (int): Object file type (e.g., executable, shared object).
+        e_machine (int): Architecture (e.g., x86_64).
+        e_version (int): Object file version.
+        e_entry (int): Entry point virtual address.
+        e_phoff (int): Program header table file offset.
+        e_shoff (int): Section header table file offset.
+        e_flags (int): Processor-specific flags.
+        e_ehsize (int): ELF header size in bytes.
+        e_phentsize (int): Program header table entry size.
+        e_phnum (int): Number of program header entries.
+        e_shentsize (int): Section header table entry size.
+        e_shnum (int): Number of section header entries.
+        e_shstrndx (int): Index of the section header string table.
+    """
     def __init__(self, e_ident, e_type, e_machine, e_version, e_entry, e_phoff, e_shoff, e_flags, e_ehsize, e_phentsize, e_phnum, e_shentsize, e_shnum, e_shstrndx):
         self.e_ident = e_ident
         self.e_type = e_type
@@ -40,6 +60,21 @@ class Elf_Ehdr():
 
 
 class Elf_Phdr():
+    """
+    Represents an entry in the program header table of an ELF file. 
+    Each program header entry provides information about a segment, 
+    which is a contiguous block of the ELF file that is loaded into memory.
+
+    Attributes:
+        p_type (int): Segment type (e.g., PT_LOAD, PT_DYNAMIC).
+        p_flags (int): Segment-specific flags (e.g., executable, writable).
+        p_offset (int): Offset of the segment in the ELF file.
+        p_vaddr (int): Virtual address at which the segment is loaded into memory.
+        p_paddr (int): Physical address for systems with physical addressing (usually ignored).
+        p_filesz (int): Size of the segment in the file.
+        p_memsz (int): Size of the segment in memory.
+        p_align (int): Alignment of the segment in memory.
+    """
 
     def __init__(self, p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align):
         self.p_type = p_type
@@ -53,6 +88,24 @@ class Elf_Phdr():
 
 
 class Elf_Shdr():
+    """
+    Represents an entry in the section header table of an ELF file. 
+    Each section header provides information about a section, 
+    such as its type, size, location in the file, and memory alignment.
+    
+    Attributes:
+        sh_name_offset (int): Offset in the string table that gives the section name.
+        sh_name (str): The section name itself (retrieved from the string table).
+        sh_type (int): Type of section (e.g., SHT_PROGBITS, SHT_SYMTAB).
+        sh_flags (int): Section attributes, such as writable, allocatable, or executable.
+        sh_addr (int): Virtual address of the section in memory.
+        sh_offset (int): Offset of the section in the file.
+        sh_size (int): Size of the section in the file.
+        sh_link (int): Link to another section (interpretation depends on section type).
+        sh_info (int): Extra information (interpretation depends on section type).
+        sh_addralign (int): Memory alignment for the section.
+        sh_entsize (int): Size of each entry for sections that contain a table of fixed-size entries (e.g., symbol table).
+    """
 
     def __init__(self, sh_name_offset, sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_info, sh_addralign, sh_entsize):
         self.sh_name_offset = sh_name_offset
@@ -69,6 +122,20 @@ class Elf_Shdr():
 
 
 class Elf_Sym():
+    """
+    Represents an entry in the symbol table of an ELF file. 
+    Symbol table entries provide information about functions, variables, 
+    or other named entities in the object file.
+
+    Attributes:
+        st_name_offset (int): Offset in the string table that gives the symbol's name.
+        st_name (str): The name of the symbol (retrieved from the string table).
+        st_info (int): Type and binding attributes of the symbol (e.g., global, local, function).
+        st_other (int): Visibility of the symbol (e.g., default, hidden).
+        st_shndx (int): Section index where the symbol is defined or a special value (e.g., SHN_UNDEF for undefined symbols).
+        st_value (int): Value of the symbol (e.g., address for a function or variable).
+        st_size (int): Size of the symbol (e.g., size of a variable or function in bytes).
+    """
 
     def __init__(self, st_name_offset, st_name, st_info, st_other, st_shndx, st_value, st_size):
         self.st_name_offset = st_name_offset
@@ -81,6 +148,15 @@ class Elf_Sym():
 
 
 class Elf_Rel():
+    """
+    Represents a relocation entry without an addend in an ELF file. 
+    Relocation entries describe how to modify the code or data of the binary 
+    to correctly link with other modules or libraries.
+
+    Attributes:
+        r_offset (int): Offset or virtual address of the reference to be relocated.
+        r_info (int): Symbol index and relocation type packed into a single value.
+    """
 
     def __init__(self, r_offset, r_info):
         self.r_offset = r_offset
@@ -88,6 +164,17 @@ class Elf_Rel():
 
 
 class Elf_Rela():
+    """
+    Represents a relocation entry with an addend in an ELF file. 
+    Relocation entries describe how to modify the code or data of the binary 
+    to correctly link with other modules or libraries. The `Elf_Rela` structure 
+    includes an explicit addend value used in the relocation computation.
+
+    Attributes:
+        r_offset (int): Offset or virtual address of the reference to be relocated.
+        r_info (int): Symbol index and relocation type packed into a single value.
+        r_addend (int): Addend value used to adjust the relocation.
+    """
 
     def __init__(self, r_offset, r_info, r_addend):
         self.r_offset = r_offset
@@ -96,6 +183,16 @@ class Elf_Rela():
 
 
 class Elf():
+    """
+    This class represents an ELF file and contains all the major ELF structures such as:
+    
+    - `elf_ehdr`: ELF header (`Elf_Ehdr`), contains metadata about the ELF file.
+    - `elf_phdr`: List of program headers (`Elf_Phdr`), each describing a segment to be loaded into memory.
+    - `elf_shdr`: List of section headers (`Elf_Shdr`), each describing a section in the file.
+    - `elf_sym`: List of symbols (`Elf_Sym`), describing functions, variables, etc.
+    - `elf_rel`: List of relocation entries without addends (`Elf_Rel`), used to relocate symbols.
+    - `elf_rela`: List of relocation entries with addends (`Elf_Rela`), used to relocate symbols with addend values.
+    """
 
     # OS ABI CONSTANTS
     class OSABI():
