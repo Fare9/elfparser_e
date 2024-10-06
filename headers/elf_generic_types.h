@@ -5,20 +5,20 @@
 
 typedef struct elf_ehdr
 {
-  unsigned char e_ident[EI_NIDENT]; /* ELF "magic number" */
-  Elf64_Half e_type;
-  Elf64_Half e_machine;
-  Elf64_Word e_version;
-  Elf64_Addr e_entry; /* Entry point virtual address */
-  Elf64_Off e_phoff;  /* Program header table file offset */
-  Elf64_Off e_shoff;  /* Section header table file offset */
-  Elf64_Word e_flags;
-  Elf64_Half e_ehsize;
-  Elf64_Half e_phentsize;
-  Elf64_Half e_phnum;
-  Elf64_Half e_shentsize;
-  Elf64_Half e_shnum;
-  Elf64_Half e_shstrndx;
+  unsigned char e_ident[EI_NIDENT]; /* ELF "magic number" and other identification */
+  Elf64_Half e_type;                /* Object file type */
+  Elf64_Half e_machine;             /* Architecture (e.g., x86_64) */
+  Elf64_Word e_version;             /* Object file version */
+  Elf64_Addr e_entry;               /* Entry point virtual address */
+  Elf64_Off e_phoff;                /* Program header table file offset */
+  Elf64_Off e_shoff;                /* Section header table file offset */
+  Elf64_Word e_flags;               /* Processor-specific flags */
+  Elf64_Half e_ehsize;              /* ELF header size in bytes */
+  Elf64_Half e_phentsize;           /* Program header table entry size */
+  Elf64_Half e_phnum;               /* Number of entries in the program header table */
+  Elf64_Half e_shentsize;           /* Section header table entry size */
+  Elf64_Half e_shnum;               /* Number of entries in the section header table */
+  Elf64_Half e_shstrndx;            /* Section header string table index */
 } Elf_Ehdr;
 
 typedef struct elf_phdr
@@ -49,34 +49,34 @@ typedef struct elf_shdr
 
 typedef struct elf_sym
 {
-  uint32_t st_name;
-  unsigned char st_info;
-  unsigned char st_other;
-  uint16_t st_shndx;
-  Elf64_Addr st_value;
-  uint64_t st_size;
+  uint32_t st_name;       /* Symbol name (index into string table) */
+  unsigned char st_info;  /* Symbol's type and binding attributes */
+  unsigned char st_other; /* Symbol visibility */
+  uint16_t st_shndx;      /* Section index where the symbol is defined */
+  Elf64_Addr st_value;    /* Symbol value (address or absolute value) */
+  uint64_t st_size;       /* Symbol size (e.g., size of data or function) */
 } Elf_Sym;
 
 typedef struct elf_rel
 {
-  Elf64_Addr  r_offset;
-  uint64_t    r_info;
+  Elf64_Addr  r_offset; /* Offset of the place to apply the relocation */
+  uint64_t    r_info;   /* Relocation type and symbol index */
 } Elf_Rel;
 
 typedef struct elf_rela
 {
-  Elf64_Addr  r_offset;
-  uint64_t    r_info;
-  int64_t     r_addend;
+  Elf64_Addr  r_offset; /* Offset of the place to apply the relocation */
+  uint64_t    r_info;   /* Relocation type and symbol index */
+  int64_t     r_addend; /* Constant addend used to compute the final value */
 } Elf_Rela;
 
 typedef struct elf_dyn
 {
-  Elf64_Sxword  d_tag;
+  Elf64_Sxword  d_tag;   /* Dynamic entry type (e.g., DT_NEEDED, DT_STRTAB) */
   union {
-    Elf64_Xword d_val;
-    Elf64_Addr  d_ptr;
-  } d_un;
+    Elf64_Xword d_val;   /* Integer value */
+    Elf64_Addr  d_ptr;   /* Address value */
+  } d_un;                /* Union of values: used based on the type of entry */
 } Elf_Dyn;
 
 #endif
